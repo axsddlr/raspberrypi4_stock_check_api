@@ -49,5 +49,23 @@ def pishop_store(request: Request):
     return rpis.pishop()
 
 
+@app.get("/chicagodist/", tags=["News"])
+@limiter.limit("250/minute")
+def chicagodist_store(request: Request):
+    return rpis.chicagodist()
+
+
+@app.get("/okdo/", tags=["News"])
+@limiter.limit("250/minute")
+def okdo_store(request: Request):
+    return rpis.okdo()
+
+
+@app.get("/vilros/", tags=["News"])
+@limiter.limit("250/minute")
+def vilros_store(request: Request):
+    return rpis.vilros()
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=3000)
