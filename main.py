@@ -10,11 +10,11 @@ from api.scrape import RPIST
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
-    title="Unofficial Lost Ark API",
-    description="An Unofficial REST API for [Lost Ark](https://www.playlostark.com/en-us/news), Made by [Andre "
+    title="Raspberry Pi 4 Stock API",
+    description="An Unofficial REST API for different vendors in relation to RPI 4 stock, Made by [Andre "
                 "Saddler]( "
-                "https://github.com/axsddlr)",
-    version="1.0.3",
+                "https://github.com/axsddlr). 50 requests per minute.",
+    version="1.0.0",
     docs_url="/",
     redoc_url=None,
 )
@@ -38,37 +38,37 @@ rpis = RPIST()
 
 
 @app.get("/digikey/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def digikey_store(request: Request):
     return rpis.digikey()
 
 
 @app.get("/pishop/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def pishop_store(request: Request):
     return rpis.pishop()
 
 
 @app.get("/chicagodist/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def chicagodist_store(request: Request):
     return rpis.chicagodist()
 
 
 @app.get("/okdo/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def okdo_store(request: Request):
     return rpis.okdo()
 
 
 @app.get("/vilros/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def vilros_store(request: Request):
     return rpis.vilros()
 
 
 @app.get("/adafruit/", tags=["News"])
-@limiter.limit("250/minute")
+@limiter.limit("50/minute")
 def adafruit_store(request: Request):
     return rpis.adafruit()
 
