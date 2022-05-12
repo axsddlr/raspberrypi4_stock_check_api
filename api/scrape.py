@@ -8,9 +8,10 @@ from utils.utils import get_soup, get_status
 digikey_url = "https://www.digikey.com/products/api/v3/mobile/filter-page/933"
 pishop_url = "https://www.pishop.us/product-category/raspberry-pi/raspberry-pi-boards/current-pi-boards/"
 chicagodist_url = "https://chicagodist.com/collections/raspberry-pi?_=pf&pf_pt_product_type=Raspberry%20Pi"
-# sparkfun_url = "https://www.sparkfun.com/search/results_framework?term=Raspberry+Pi+4+Model+B"
+sparkfun_url = "https://www.sparkfun.com/search/results_framework?term=Raspberry+Pi+4+Model+B"
 okdo_url = "https://www.okdo.com/us/c/pi-shop/the-raspberry-pi/raspberry-pi4/"
 vilros_url = "https://vilros.com/collections/raspberry-pi-4?refinementList%5Bnamed_tags.SUB_CAT%5D%5B0%5D=Boards"
+adafruit_url = "https://www.adafruit.com/search?q=raspberry%20pi%204%20model%20b"
 
 
 # digikey store
@@ -114,12 +115,12 @@ class RPIST:
         status = get_status(URL)
         response = get_soup(URL)
 
-        la_base = response.find("div", {"class": re.compile("products-list row")})
-        la_module = la_base.find_all("div", {
+        init_base = response.find("div", {"class": re.compile("products-list row")})
+        modules = init_base.find_all("div", {
             "class": re.compile("product-layout product-grid product-grid-4 col-lg-3 col-md-4 col-12")})
 
         get_urls = []
-        for module in la_module:
+        for module in modules:
             url = module.find("a", {"class": "product-item-photo"})["href"]
             if "raspberry-pi-4-model-b" in url:
                 get_urls.append(url)
@@ -160,12 +161,12 @@ class RPIST:
         status = get_status(URL)
         response = get_soup(URL)
 
-        la_base = response.find("div", {"class": re.compile("twelve columns")})
-        la_module = la_base.find_all("div", {
+        init_base = response.find("div", {"class": re.compile("twelve columns")})
+        modules = init_base.find_all("div", {
             "class": re.compile("three columns")})
         #
         api = []
-        for module in la_module:
+        for module in modules:
             product_url = 'https://chicagodist.com' + module.find("a")["href"]
             product_name = module.find("span").text
             product_price = "$" + module.find("meta")["content"]
@@ -197,12 +198,12 @@ class RPIST:
     #     status = get_status(URL)
     #     response = get_soup(URL)
     #
-    #     la_base = response.find("div", {"class": re.compile("col-md-10 col-sm-9 col-xs-12")})
-    #     la_module = la_base.find_all("div", {
+    #     init_base = response.find("div", {"class": re.compile("col-md-10 col-sm-9 col-xs-12")})
+    #     modules = init_base.find_all("div", {
     #         "class": re.compile("product-tile")})
     #
     #     get_urls = []
-    #     for module in la_module:
+    #     for module in modules:
     #         url = module.find("a")["href"]
     #         # name = module.find("span").text
     #         get_urls.append(url)
@@ -245,13 +246,13 @@ class RPIST:
         status = get_status(URL)
         response = get_soup(URL)
 
-        la_base = response.find("div",
+        init_base = response.find("div",
                                 {"class": re.compile("c-product-listing--4x3-grid c-product-listing type-compact")})
-        la_module = la_base.find_all("a", {
+        modules = init_base.find_all("a", {
             "class": re.compile("c-product-listing__item")})
         #
         api = []
-        for module in la_module:
+        for module in modules:
             product_url = module["href"]
             product_name = module["data-name"]
             product_price = module.find("span", {"class": re.compile("woocommerce-Price-amount amount")}).text.strip()
@@ -312,6 +313,44 @@ class RPIST:
             raise Exception("API response: {}".format(status))
         return data
 
+    @staticmethod
+    def adafruit():
+        URL = adafruit_url
+        status = get_status(URL)
+        response = get_soup(URL)
+
+        init_base = response.find(id="productListing")
+        modules = init_base.find_all("div", {"class": re.compile("row product-listing")})
+
+        api = []
+        for module in modules:
+            product_url = "https://www.adafruit.com" + module.find("a")["href"]
+            product_name = module.find("h2").text.strip()
+            product_price = module.find("div", {"class": re.compile("price")}).span.text.strip()
+            product_instock = module.find("div", {"class": re.compile("stock")}).text.strip()
+            product_instock = product_instock.replace("\n", " ")
+            product_instock = product_instock.split("    ")[-1]
+            if product_instock == 'Out of stock':
+                product_instock = False
+            else:
+                product_instock = True
+
+            if "Raspberry Pi 4 Model B" in product_name and "Kit" not in product_name and "with 1GB, 2GB, or 4GB RAM" not in product_name:
+                api.append(
+                    {
+                        "product_name": product_name,
+                        "product_price": product_price,
+                        "product_instock": product_instock,
+                        "product_url": product_url,
+                    }
+                )
+
+        data = {"status": status, "data": api}
+
+        if status != 200:
+            raise Exception("API response: {}".format(status))
+        return data
+
 
 if __name__ == '__main__':
-    print(RPIST.vilros())
+    print(RPIST.adafruit())
