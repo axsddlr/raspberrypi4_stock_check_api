@@ -3,7 +3,7 @@ import re
 import httpx
 import ujson as json
 
-from utils.utils import get_soup, get_status
+from utils.utils import get_soup, get_status, headers
 
 digikey_url = "https://www.digikey.com/products/api/v3/mobile/filter-page/933"
 pishop_url = "https://www.pishop.us/product-category/raspberry-pi/raspberry-pi-boards/current-pi-boards/"
@@ -119,37 +119,31 @@ class RPIST:
         modules = init_base.find_all("div", {
             "class": re.compile("product-layout product-grid product-grid-4 col-lg-3 col-md-4 col-12")})
 
-        get_urls = []
+        api = []
         for module in modules:
-            url = module.find("a", {"class": "product-item-photo"})["href"]
-            if "raspberry-pi-4-model-b" in url:
-                get_urls.append(url)
+            product_url = module.find("a", {"class": "product-item-photo"})["href"]
+            product_name = module.find("img")["title"]
+            product_name = product_name.replace("/", " - ")
+            product_id = module.find("div", {"class": "product-colors"})["data-product-id"]
 
-            get_product_data = []
-            for each in get_urls:
-                r = get_soup(each)
-                #         # product_url = "https://www.pishop.us" + each
-                product_name = r.find("h1", {"class": re.compile("productView-title")}).text
-                product_name = product_name.replace("/", " - ")
-                product_price = r.find("span", {"class": re.compile("price price--withoutTax")}).text
-                #         # product_id = module.find("input", {"name": "product"})["value"]
-                product_stock = r.find("input", {"id": "form-action-addToCart"})["value"]
-                # turn product_stock into boolean
-                if product_stock == 'Out of stock':
-                    product_stock = False
-                else:
-                    product_stock = True
-                #
-                get_product_data.append(
-                    {
-                        "product_name": product_name,
-                        "product_price": product_price,
-                        "product_instock": product_stock,
-                        "product_url": each,
-                    }
-                )
+            base_api = "https://www.pishop.us/remote/v1/product-attributes/"
 
-        data = {"status": status, "data": get_product_data}
+            product_json_data = base_api + product_id
+            response = httpx.get(product_json_data, headers=headers)
+            apiResponse = response.json()
+
+            product_stock = apiResponse["data"]["instock"]
+            product_price = apiResponse["data"]["price"]["without_tax"]["formatted"]
+
+            if "raspberry-pi-4-model-b" in product_url:
+                api.append({
+                    "product_name": product_name,
+                    "product_price": product_price,
+                    "product_instock": product_stock,
+                    "product_url": product_url,
+                })
+
+        data = {"status": status, "data": api}
 
         if status != 200:
             raise Exception("API response: {}".format(status))
